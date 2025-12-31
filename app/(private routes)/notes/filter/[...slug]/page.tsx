@@ -1,0 +1,79 @@
+import { Metadata } from "next";
+import { fetchNotes } from "@/lib/api/serverApi";
+import NotesClient from "./Notes.client";
+import {
+  HydrationBoundary,
+  QueryClient,
+  dehydrate,
+} from "@tanstack/react-query";
+
+type Props = {
+  params: Promise<{
+    slug?: string[];
+  }>;
+};
+
+// ---------- METADATA ----------
+export async function generateMetadata(
+  { params }: Props
+): Promise<Metadata> {
+  const resolvedParams = await params;
+  const slug = resolvedParams.slug ?? [];
+  const tag = slug[0] === "all" ? undefined : slug[0];
+
+  if (!tag) {
+    return {
+      title: "All notes",
+      description: "All notes selected",
+      openGraph: {
+        title: "All notes",
+        description: "All notes selected",
+        images: [
+          {
+            url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
+            width: 1200,
+            height: 630,
+            alt: "Unfiltered notes",
+          },
+        ],
+      },
+    };
+  }
+
+  return {
+    title: `${tag} notes`,
+    description: `Filtered by tag "${tag}" notes`,
+    openGraph: {
+      title: `${tag} notes`,
+      description: `This notes filtered by tag "${tag}"`,
+      images: [
+        {
+          url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
+          width: 1200,
+          height: 630,
+          alt: "Filtered notes",
+        },
+      ],
+    },
+  };
+}
+
+// ---------- PAGE ----------
+export default async function NotesByTags({ params }: Props) {
+  const resolvedParams = await params;
+  const slug = resolvedParams.slug ?? [];
+  const tag = slug[0] === "all" ? undefined : slug[0];
+
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: ["notes", 1, "", tag],
+    queryFn: () => fetchNotes(1, "", tag),
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <NotesClient tag={tag} />
+    </HydrationBoundary>
+  );
+}
