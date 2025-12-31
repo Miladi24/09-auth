@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import css from "./CreateNote.module.css";
 import NoteForm from "@/components/NoteForm/NoteForm";
+import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
   title: "Create Note",
@@ -20,13 +21,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function NoteCreate() {
+function CreateNote() {
   return (
     <main className={css.main}>
       <div className={css.container}>
         <h1 className={css.title}>Create note</h1>
         <NoteForm />
+        <Toaster />
       </div>
     </main>
   );
 }
+
+export default CreateNote;

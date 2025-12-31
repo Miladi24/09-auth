@@ -1,3 +1,3 @@
-export default function DefaultModalSlot() {
+export default function ModalSlot() {
   return null;
 }

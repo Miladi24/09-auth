@@ -1,79 +1,58 @@
-import { Metadata } from "next";
-import { fetchNotes } from "@/lib/api/serverApi";
-import NotesClient from "./Notes.client";
+
 import {
+  dehydrate,
   HydrationBoundary,
   QueryClient,
-  dehydrate,
-} from "@tanstack/react-query";
-
+} from '@tanstack/react-query';
+import { Metadata } from 'next';
+import { fetchNotes } from '@/lib/api/serverApi';
+import NotesClient from './Notes.client';
 type Props = {
   params: Promise<{
     slug?: string[];
   }>;
 };
 
-// ---------- METADATA ----------
-export async function generateMetadata(
-  { params }: Props
-): Promise<Metadata> {
-  const resolvedParams = await params;
-  const slug = resolvedParams.slug ?? [];
-  const tag = slug[0] === "all" ? undefined : slug[0];
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const urlPath = (await params).slug?.join('/');
+  const filter = (await params).slug?.join(' / ');
 
-  if (!tag) {
-    return {
-      title: "All notes",
-      description: "All notes selected",
-      openGraph: {
-        title: "All notes",
-        description: "All notes selected",
-        images: [
-          {
-            url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
-            width: 1200,
-            height: 630,
-            alt: "Unfiltered notes",
-          },
-        ],
-      },
-    };
-  }
+  const title = `Notes filtered by ${filter}`;
+  const description = `Browse notes filtered by ${filter}`;
 
   return {
-    title: `${tag} notes`,
-    description: `Filtered by tag "${tag}" notes`,
+    title,
+    description,
     openGraph: {
-      title: `${tag} notes`,
-      description: `This notes filtered by tag "${tag}"`,
+      title,
+      description,
+      url: `/notes/filter/${urlPath}`,
       images: [
         {
           url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
+          alt: "NoteHub – modern note-taking app",
           width: 1200,
-          height: 630,
-          alt: "Filtered notes",
-        },
-      ],
+          height: 630
+        }
+      ]
     },
   };
 }
 
-// ---------- PAGE ----------
-export default async function NotesByTags({ params }: Props) {
+export default async function Notes({ params }: Props) {
   const resolvedParams = await params;
-  const slug = resolvedParams.slug ?? [];
-  const tag = slug[0] === "all" ? undefined : slug[0];
-
+  const slug = resolvedParams?.slug?.[0] ?? 'all';
+  const tag = slug === 'all' ? null : slug;
   const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({
-    queryKey: ["notes", 1, "", tag],
-    queryFn: () => fetchNotes(1, "", tag),
+    queryKey: ['notes', tag, '', 1],
+    queryFn: () => fetchNotes({ query: '', page: 1, tag }),
   });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <NotesClient tag={tag} />
+      <NotesClient tag={tag} key={tag ?? 'all'} />
     </HydrationBoundary>
   );
 }

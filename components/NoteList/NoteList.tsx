@@ -1,49 +1,48 @@
-import css from "./NoteList.module.css";
-import type { Note } from "../../types/note";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteNote } from "@/lib/api/clientApi";
-import Link from "next/link";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
+import Link from 'next/link';
+
+import css from './NoteList.module.css';
+import { type Note } from '@/types/note';
+import { deleteNote } from '@/lib/api/clientApi';
 
 interface NoteListProps {
   notes: Note[];
 }
 
-function NoteList({ notes }: NoteListProps) {
+export default function NoteList({ notes }: NoteListProps) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (id: string) => deleteNote(id),
+    mutationFn: deleteNote,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
+      toast.error('Note deleted!');
+    },
+    onError: () => {
+      toast.error('Error deleting note');
     },
   });
 
-  const handleDelete = (id: string) => {
-    mutation.mutate(id);
-  };
-
   return (
-    <>
-      <ul className={css.list}>
-        {notes.map((note) => (
-          <li key={note.id} className={css.listItem}>
-            <h2 className={css.title}>{note.title}</h2>
-            <p className={css.content}>{note.content}</p>
-            <div className={css.footer}>
-              <span className={css.tag}>{note.tag}</span>
-              <Link href={`/notes/${note.id}`}>View details</Link>
-              <button
-                className={css.button}
-                onClick={() => handleDelete(note.id)}
-              >
-                Delete
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </>
+    <ul className={css.list}>
+      {notes.map(note => (
+        <li className={css.listItem} key={note.id}>
+          <h2 className={css.title}>{note.title}</h2>
+          <p className={css.content}>{note.content}</p>
+          <div className={css.footer}>
+            <span className={css.tag}>{note.tag}</span>
+            <Link className={css.link} href={`/notes/${note.id}`} scroll={false}>View details</Link>
+            <button
+              className={css.button}
+              onClick={() => mutation.mutate(note.id)}
+              aria-label={`Delete note ${note.title}`}
+            >
+              Delete
+            </button>
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }
-
-export default NoteList;

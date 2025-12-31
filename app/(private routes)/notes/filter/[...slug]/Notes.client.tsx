@@ -1,76 +1,83 @@
-"use client";
+'use client';
+import { useState, useEffect } from 'react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { useDebouncedCallback } from 'use-debounce';
+import toast, { Toaster } from 'react-hot-toast';
+import Link from 'next/link';
 
-import css from "@/app/page.module.css";
-import { useState, useEffect } from "react";
-import { useDebounce } from "use-debounce";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { fetchNotes } from "@/lib/api/clientApi";
-import NoteList from "@/components/NoteList/NoteList";
-import type { Note } from "@/types/note";
-import toast, { Toaster } from "react-hot-toast";
-import Link from "next/link";
+import css from './Notes.module.css';
+import { fetchNotes } from '@/lib/api/clientApi';
 
-import SearchBox from "@/components/SearchBox/SearchBox";
-import Pagination from "@/components/Pagination/Pagination";
+import NoteList from '@/components/NoteList/NoteList';
+import Pagination from '@/components/Pagination/Pagination';
+import SearchBox from '@/components/SearchBox/SearchBox';
+import Loader from '@/components/Loader/Loader';
 
-interface FetchNotesResponse {
-  notes: Note[];
-  totalPages: number;
-}
+type Props = {
+  tag: string | null;
+};
 
-interface NotesClientProps {
-  tag?: string;
-}
-
-export default function NotesClient({ tag }: NotesClientProps) {
+export default function NotesClient({ tag }: Props) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
 
-  const [debouncedSearch] = useDebounce(search, 300);
+  const updateDebouncedQuery = useDebouncedCallback(() => {
+    setDebouncedQuery(query);
+  }, 300);
 
-  const { data, isFetching } = useQuery<FetchNotesResponse>({
-    queryKey: ["notes", currentPage, debouncedSearch, tag],
-    queryFn: () => fetchNotes(currentPage, debouncedSearch, tag),
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(event.target.value);
+    setCurrentPage(1);
+  };
+
+  useEffect(() => {
+    updateDebouncedQuery();
+  }, [query, updateDebouncedQuery]);
+
+  const { data, isLoading, isError, isSuccess } = useQuery({
+    queryKey: ['notes', tag, debouncedQuery, currentPage],
+    queryFn: () =>
+      fetchNotes({ query: debouncedQuery, page: currentPage, tag }),
     placeholderData: keepPreviousData,
-    initialData: {
-      notes: [],
-      totalPages: 0,
-    },
   });
 
-  // Reset page when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearch]);
+  const totalPages = data?.totalPages ?? 0;
 
-  // Show toast only when search is active and no notes found
   useEffect(() => {
-    if (!isFetching && debouncedSearch && data.notes.length === 0) {
-      toast.error("No notes found.");
+    if (
+      isSuccess &&
+      data?.notes.length === 0 &&
+      debouncedQuery.trim().length > 0
+    ) {
+      toast.error('No notes found for your request.');
     }
-  }, [data.notes.length, debouncedSearch, isFetching]);
+  }, [isSuccess, data?.notes.length, debouncedQuery]);
 
   return (
-    <div className={css.app}>
-      <div className={css.toolbar}>
-        <SearchBox onChange={setSearch} />
-
-        {data.totalPages > 1 && (
-          <Pagination
-            pageCount={data.totalPages}
-            currentPage={currentPage}
-            onPageChange={setCurrentPage}
-          />
-        )}
-
-        <Link href="/notes/action/create" className={css.createNoteLink}>
-          Create note +
-        </Link>
+    <>
+      <div className={css.app}>
+        <header className={css.toolbar}>
+          <SearchBox searchQuery={query} onChange={(e) => setQuery(e.target.value)}/>
+          {data && data.notes.length > 0 && (
+              <Pagination
+                pageCount={totalPages}
+                currentPage={currentPage}
+                 onPageChange={(page) => setCurrentPage(page)}
+              />
+            )}
+          {
+            <Link href="/notes/action/create" className={css.button}>
+              Create note +
+            </Link>
+          }
+        </header>
+        {isLoading && <Loader />}
+        {isError && <p>Something went wrong. Please try again.</p>}
+        {data && data.notes.length === 0 && <p>No notes found.</p>}
+        {data && data.notes.length > 0 && <NoteList notes={data.notes} />}
       </div>
-
-      {data.notes.length > 0 && <NoteList notes={data.notes} />}
-
       <Toaster />
-    </div>
+    </>
   );
 }

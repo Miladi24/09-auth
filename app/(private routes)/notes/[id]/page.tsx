@@ -1,4 +1,4 @@
-// app/(private routes)/notes/[id]/page.tsx
+
 import { Metadata } from "next";
 import { fetchNoteById } from "@/lib/api/serverApi";
 import NoteDetailsClient from "@/app/(private routes)/notes/[id]/NoteDetails.client";
@@ -37,19 +37,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function NoteDetails({ params }: Props) {
+export default async function Notes({ params }: Props)
+ {
   const { id } = await params;
 
   const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({
-    queryKey: ["note", id],
+    queryKey: ['note', id],
     queryFn: () => fetchNoteById(id),
   });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <NoteDetailsClient />
+      <NoteDetailsClient id={id} />
     </HydrationBoundary>
   );
 }

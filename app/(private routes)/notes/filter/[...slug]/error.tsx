@@ -1,11 +1,19 @@
-"use client";
+'use client';
 
 type Props = {
   error: Error;
+  reset: () => void;
 };
 
-const Error = ({ error }: Props) => {
-  return <p>Could not fetch note details. {error.message}</p>;
-};
+export default function NotesFilteredError({ error, reset }: Props) {
+  console.log(error);
 
-export default Error;
+  return (
+    <div>
+      <h2>Something went wrong while loading filtered notes.</h2>
+      <button type="button" onClick={reset}>
+        Try again
+      </button>
+    </div>
+  );
+}
