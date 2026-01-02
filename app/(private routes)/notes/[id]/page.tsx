@@ -1,44 +1,50 @@
-
-import { Metadata } from "next";
-import { fetchNoteById } from "@/lib/api/serverApi";
-import NoteDetailsClient from "@/app/(private routes)/notes/[id]/NoteDetails.client";
 import {
+  dehydrate,
   HydrationBoundary,
   QueryClient,
-  dehydrate,
-} from "@tanstack/react-query";
+} from '@tanstack/react-query';
+import { Metadata } from 'next';
+import { fetchNoteById } from '@/lib/api/serverApi';
+import NoteDetailsClient from './NoteDetails.client';
 
-type Props = {
-  params: Promise<{
-    id: string;
-  }>;
+type MetadataProps = {
+  params: Promise<{ id: string }>;
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+type NotesProps = {
+  params: Promise<{ id: string }>;
+};
+
+export async function generateMetadata({
+  params,
+}: MetadataProps): Promise<Metadata> {
   const { id } = await params;
+
   const note = await fetchNoteById(id);
 
+  const title = `Note: ${note.title}`;
+  const description = note.content.slice(0, 30);
+
   return {
-    title: note.title,
-    description: note.content,
+    title,
+    description,
     openGraph: {
-      title: note.title,
-      description: note.content,
-      url: `https://08-zustand-seven-pi.vercel.app/notes/${id}`,
+      title,
+      description,
+      url: `/notes/${id}`,
       images: [
         {
-          url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
+          url: 'https://09-auth-five-nu.vercel.app/notehub-og-meta.jpg',
+          alt: 'NoteHub – modern note-taking app',
           width: 1200,
           height: 630,
-          alt: "Note details",
         },
       ],
     },
   };
 }
 
-export default async function Notes({ params }: Props)
- {
+export default async function Notes({ params }: NotesProps) {
   const { id } = await params;
 
   const queryClient = new QueryClient();

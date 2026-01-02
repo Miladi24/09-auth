@@ -1,68 +1,40 @@
-"use client";
+'use client';
+import css from './EditProfilePage.module.css';
+import { useAuthStore } from '@/lib/store/authStore';
+import { updateMe } from '@/lib/api/clientApi';
 
-import { useEffect, useState, ChangeEvent, FormEvent } from "react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import css from "./EditProfilePage.module.css";
-import { checkSession, getMe, updateMe } from "@/lib/api/clientApi";
-import { useAuthStore } from "@/lib/store/authStore";
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-export default function EditProfilePage() {
+const EditProfilePage = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const user = useAuthStore((state) => state.user);
-  const setUser = useAuthStore((state) => state.setUser);
-  const clearIsAuthenticated = useAuthStore(
-    (state) => state.clearIsAuthenticated
-  );
+  const user = useAuthStore(store => store.user);
+  const setUser = useAuthStore(store => store.setUser);
 
-  const [newUsername, setNewUsername] = useState("");
+  const { mutate, isPending } = useMutation({
+    mutationFn: updateMe,
+    onSuccess: updatedUser => {
+      setUser(updatedUser);
+      queryClient.invalidateQueries({
+        queryKey: ['me'],
+      });
+      router.push('/profile');
+    },
+  });
 
-  useEffect(() => {
-    if (user) {
-      setNewUsername(user.username || "");
-      return;
-    }
+  if (!user) {
+    return <p>Loading profile...</p>;
+  }
 
-    const fetchUser = async () => {
-      try {
-        await checkSession();
-        const fetchedUser = await getMe();
-        if (fetchedUser) {
-          setUser(fetchedUser);
-          setNewUsername(fetchedUser.username || "");
-        }
-      } catch {
-        clearIsAuthenticated();
-      }
-    };
+  const handleSubmit = async (formData: FormData) => {
+    const username = formData.get('username') as string;
 
-    fetchUser();
-  }, [user, setUser, clearIsAuthenticated]);
-
-  const handleUsernameChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setNewUsername(e.target.value);
+    if (!username || !username.trim()) return;
+    mutate({ username });
   };
-
-  const handleSave = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    try {
-      await updateMe({ username: newUsername });
-      if (user) {
-        setUser({ ...user, username: newUsername });
-      }
-      router.push("/profile");
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleCancel = () => {
-    router.back();
-  };
-
-  if (!user) return null;
 
   return (
     <main className={css.mainContent}>
@@ -70,34 +42,44 @@ export default function EditProfilePage() {
         <h1 className={css.formTitle}>Edit Profile</h1>
 
         <Image
-          src={user.avatar}
+          src="https://ac.goit.global/fullstack/react/default-avatar.jpg"
           alt="User Avatar"
+          className={css.avatar}
           width={120}
           height={120}
-          className={css.avatar}
         />
 
-        <form onSubmit={handleSave} className={css.profileInfo}>
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            handleSubmit(new FormData(e.currentTarget));
+          }}
+          className={css.profileInfo}
+        >
           <div className={css.usernameWrapper}>
-            <label htmlFor="username">Username:</label>
+            <label htmlFor="username">Username: </label>
             <input
-              id="username"
               type="text"
-              value={newUsername}
-              onChange={handleUsernameChange}
+              id="username"
+              name="username"
               className={css.input}
+              defaultValue={user.username ?? ''}
             />
           </div>
 
           <p>Email: {user.email}</p>
 
           <div className={css.actions}>
-            <button type="submit" className={css.saveButton}>
+            <button
+              type="submit"
+              className={css.saveButton}
+              disabled={isPending}
+            >
               Save
             </button>
             <button
+              onClick={() => router.back()}
               type="button"
-              onClick={handleCancel}
               className={css.cancelButton}
             >
               Cancel
@@ -107,4 +89,6 @@ export default function EditProfilePage() {
       </div>
     </main>
   );
-}
+};
+
+export default EditProfilePage;

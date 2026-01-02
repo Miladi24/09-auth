@@ -1,47 +1,45 @@
-"use client";
-import axios from "axios";
-import { useState } from "react";
-import css from "./SignUpPage.module.css";
-import { register } from "@/lib/api/clientApi";
-import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/lib/store/authStore";
+'use client';
 
-export default function SignUpForm() {
-  const [error, setError] = useState<string | null>("");
+import css from './SignUpPage.module.css';
+import { register, RegisterRequest } from '@/lib/api/clientApi';
+import { useAuthStore } from '@/lib/store/authStore';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { isAxiosError } from 'axios';
+
+function SignUp() {
   const router = useRouter();
-  const setUser = useAuthStore((state) => state.setUser);
+  const [error, setError] = useState('');
+  const setUser = useAuthStore(store => store.setUser);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(null);
-
-    const form = e.currentTarget;
-
-    const email = (form.elements.namedItem("email") as HTMLInputElement).value;
-    const password = (form.elements.namedItem("password") as HTMLInputElement)
-      .value;
-
+  const handleSubmit = async (formData: FormData) => {
     try {
-      const res = await register({ email, password });
+      const formValues = Object.fromEntries(formData) as RegisterRequest;
+      const res = await register(formValues);
       if (res) {
         setUser(res);
-        router.push("/profile");
+        router.push('/profile');
       } else {
-        setError("Invalid email or password");
+        setError('Invalid email or password');
       }
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data.message ?? "Something went wrong");
+    } catch (error) {
+      if (isAxiosError(error)) {
+        setError(
+          error.response?.data?.error ??
+            error.message ??
+            'Oops.. something went wrong'
+        );
       } else {
-        setError("Unexpected error");
+        setError('Oops.. something went wrong');
       }
     }
   };
 
   return (
     <main className={css.mainContent}>
-      <h1 className={css.formTitle}>Sign up</h1>
-      <form className={css.form} onSubmit={handleSubmit}>
+      <form action={handleSubmit} className={css.form}>
+      <h1 className={css.formTitle}>Sign Up</h1>
         <div className={css.formGroup}>
           <label htmlFor="email">Email</label>
           <input
@@ -75,3 +73,5 @@ export default function SignUpForm() {
     </main>
   );
 }
+
+export default SignUp;

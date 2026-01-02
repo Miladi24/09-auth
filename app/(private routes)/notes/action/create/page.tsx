@@ -1,25 +1,24 @@
-import { Metadata } from "next";
-import css from "./CreateNote.module.css";
-import NoteForm from "@/components/NoteForm/NoteForm";
+import css from './CreateNote.module.css';
+import NoteForm from '@/components/NoteForm/NoteForm';
 import { Toaster } from 'react-hot-toast';
+import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Create Note",
-  description: "Create a new note",
+  title: 'Create note',
+  description: 'Create a new note in your personal notes collection',
   openGraph: {
-    title: "Create Note",
-    description: "Create a new note",
-    url: "https://08-zustand-seven-pi.vercel.app/notes/action/create",
-    images: [
-      {
-        url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Create Note",
-      },
-    ],
-  },
-};
+    title: 'Create note',
+    description: 'Create a new note in your personal notes collection',
+    url: 'https://08-zustand-kappa-opal.vercel.app/notes/action/create',
+    images: [{
+      url: 'https://08-zustand-kappa-opal.vercel.app/notehub-og-meta.jpg',
+      width: 1200,
+      height: 630,
+      alt: 'Create note page'
+    }]
+  }
+}
+
 
 function CreateNote() {
   return (

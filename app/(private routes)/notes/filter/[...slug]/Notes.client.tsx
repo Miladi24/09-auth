@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
@@ -58,12 +59,12 @@ export default function NotesClient({ tag }: Props) {
     <>
       <div className={css.app}>
         <header className={css.toolbar}>
-          <SearchBox searchQuery={query} onChange={(e) => setQuery(e.target.value)}/>
+          <SearchBox searchQuery={query} onChange={handleChange} />
           {data && data.notes.length > 0 && (
               <Pagination
-                pageCount={totalPages}
+                totalPages={totalPages}
                 currentPage={currentPage}
-                 onPageChange={(page) => setCurrentPage(page)}
+                setCurrentPage={setCurrentPage}
               />
             )}
           {

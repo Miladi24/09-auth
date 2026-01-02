@@ -9,7 +9,7 @@ export type RegisterRequest = {
 };
 
 export async function register(data: RegisterRequest) {
-  const response = await nextServer.post<User>('/api/auth/register', data);
+  const response = await nextServer.post<User>('/auth/register', data);
   return response.data;
 }
 
@@ -19,12 +19,12 @@ export type LoginRequest = {
 };
 
 export async function login(data: LoginRequest) {
-  const response = await nextServer.post<User>('/api/auth/login', data);
+  const response = await nextServer.post<User>('/auth/login', data);
   return response.data;
 }
 
 export async function logout(): Promise<void> {
-  await nextServer.post('/api/auth/logout');
+  await nextServer.post('/auth/logout');
 }
 
 export async function getMe(): Promise<User> {
@@ -85,6 +85,6 @@ export async function deleteNote(id: string): Promise<Note> {
 }
 
 export async function checkSession(): Promise<User> {
-  const response = await nextServer.get('/api/auth/session');
+  const response = await nextServer.get('/auth/session');
   return response.data;
 }
