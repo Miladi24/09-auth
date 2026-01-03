@@ -34,7 +34,7 @@ export async function generateMetadata({
       url: `/notes/${id}`,
       images: [
         {
-          url: 'https://09-auth-five-nu.vercel.app/notehub-og-meta.jpg',
+          url: 'https://09-auth-vucv.vercel.app/notehub-og-meta.jpg',
           alt: 'NoteHub – modern note-taking app',
           width: 1200,
           height: 630,

@@ -10,14 +10,14 @@ import { getMe, checkServerSession } from '@/lib/api/serverApi';
 export const metadata: Metadata = {
   title: 'Profile page',
   description: 'User profile page with personal information',
-  metadataBase: 'https://09-auth-five-nu.vercel.app/',
+  metadataBase: 'https://09-auth-vucv.vercel.app/',
   openGraph: {
     title: 'Profile page',
     description: 'User profile page with personal information',
-    url: 'https://09-auth-five-nu.vercel.app/',
+    url: 'https://09-auth-vucv.vercel.app/',
     images: [
       {
-        url: 'https://09-auth-five-nu.vercel.app/notehub-og-meta.jpg',
+        url: 'https://09-auth-vucv.vercel.app/notehub-og-meta.jpg',
         width: 1200,
         height: 630,
         alt: 'Notehub - Profile page',
