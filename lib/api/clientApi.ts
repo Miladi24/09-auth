@@ -30,10 +30,15 @@ export async function logout(): Promise<void> {
   await nextServer.post('/auth/logout');
 }
 
-export async function checkSession(): Promise<User> {
+
+export async function checkSessionClient(): Promise<User> {
   const response = await nextServer.get<User>('/auth/session');
   return response.data;
 }
+
+// clientApi.ts
+export { checkSessionClient as checkSession };
+
 
 /* ================= USER ================= */
 

@@ -7,6 +7,27 @@ import { redirect } from 'next/navigation';
 import axios from 'axios';
 import { cookies } from 'next/headers';
 
+/* ================= HELPERS ================= */
+
+async function getAuthHeaders() {
+  const cookieStore = await cookies();
+
+  const accessToken = cookieStore.get('accessToken')?.value;
+  const refreshToken = cookieStore.get('refreshToken')?.value;
+
+  const cookieHeader = [
+    accessToken ? `accessToken=${accessToken}` : null,
+    refreshToken ? `refreshToken=${refreshToken}` : null,
+  ].filter(Boolean).join('; ');
+
+  return {
+    headers: {
+      Cookie: cookieHeader,
+    },
+  };
+}
+
+
 
 /* ================= NOTES ================= */
 
@@ -26,6 +47,8 @@ export async function fetchNotes({
   page = 1,
   tag,
 }: FetchNotesProps): Promise<NoteHttpResponse> {
+  const headers = (await getAuthHeaders()).headers;
+
   const response = await api.get<NoteHttpResponse>('/notes', {
     params: {
       search: query,
@@ -33,49 +56,64 @@ export async function fetchNotes({
       perPage: 12,
       ...(tag ? { tag } : {}),
     },
+    headers,
   });
 
   return response.data;
 }
 
 export async function fetchNoteById(id: string): Promise<Note> {
-  const response = await api.get<Note>(`/notes/${id}`);
+  const headers = (await getAuthHeaders()).headers;
+
+  const response = await api.get<Note>(`/notes/${id}`, { headers });
+
   return response.data;
 }
+
 
 export async function createNote(newNote: NewNote): Promise<Note> {
-  const response = await api.post<Note>('/notes', newNote);
+  const headers = (await getAuthHeaders()).headers;
+
+  const response = await api.post<Note>('/notes', newNote, { headers });
+
   return response.data;
 }
 
+
 export async function deleteNote(id: string): Promise<Note> {
-  const response = await api.delete<Note>(`/notes/${id}`);
+  const headers = (await getAuthHeaders()).headers;
+
+  const response = await api.delete<Note>(`/notes/${id}`, { headers });
+
   return response.data;
 }
+
 
 /* ================= USER ================= */
 
 export async function getMe(): Promise<User> {
-  const cookieStore = await cookies();
-  const response = await api.get<User>('/users/me', {
-    headers: {
-      Cookie: cookieStore.toString(),
-    },
-  });
+  const headers = (await getAuthHeaders()).headers;
+
+  const response = await api.get<User>('/users/me', { headers });
 
   return response.data;
 }
 
+/* ================= AUTH ================= */
 
 export async function checkServerSession(): Promise<AxiosResponse<SessionResponse>> {
   try {
-    return await api.get<SessionResponse>('/auth/session');
+    const headers = (await getAuthHeaders()).headers;
+    return await api.get<SessionResponse>('/auth/session', { headers });
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
       redirect('/sign-in');
     }
     throw error;
   }
 }
+
+
+
 
 

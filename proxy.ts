@@ -1,4 +1,3 @@
-// proxy.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { parse } from 'cookie';
@@ -17,8 +16,12 @@ export async function proxy(request: NextRequest) {
   const isPrivateRoute = privateRoutes.some(route => pathname.startsWith(route));
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
 
-  // Якщо немає accessToken
+  // ===============================
+  // 1️⃣ НЕМАЄ accessToken
+  // ===============================
   if (!accessToken) {
+    let refreshed = false;
+
     if (refreshToken) {
       try {
         const res = await checkServerSession();
@@ -26,37 +29,58 @@ export async function proxy(request: NextRequest) {
 
         if (setCookie) {
           const cookieArray = Array.isArray(setCookie) ? setCookie : [setCookie];
+
           for (const cookieStr of cookieArray) {
             const parsed = parse(cookieStr);
-            const options = {
-              expires: parsed.Expires ? new Date(parsed.Expires) : undefined,
-              path: parsed.Path,
-              maxAge: Number(parsed['Max-Age']),
-            };
-            if (parsed.accessToken) cookieStore.set('accessToken', parsed.accessToken, options);
-            if (parsed.refreshToken) cookieStore.set('refreshToken', parsed.refreshToken, options);
-          }
 
-          if (isPrivateRoute) {
-            return NextResponse.next({ headers: { Cookie: cookieStore.toString() } });
-          }
-          if (isPublicRoute) {
-            return NextResponse.redirect(new URL('/', request.url), { headers: { Cookie: cookieStore.toString() } });
+            const options = {
+              path: parsed.Path,
+              maxAge: parsed['Max-Age'] ? Number(parsed['Max-Age']) : undefined,
+              expires: parsed.Expires ? new Date(parsed.Expires) : undefined,
+            };
+
+            if (parsed.accessToken) {
+              cookieStore.set('accessToken', parsed.accessToken, options);
+              refreshed = true;
+            }
+
+            if (parsed.refreshToken) {
+              cookieStore.set('refreshToken', parsed.refreshToken, options);
+            }
           }
         }
       } catch {
-        // silent fail
+        refreshed = false;
       }
     }
 
-    // Якщо refreshToken немає або недійсний
-    if (isPrivateRoute) return NextResponse.redirect(new URL('/sign-in', request.url));
-    if (isPublicRoute) return NextResponse.next();
+    // ❗ КЛЮЧОВИЙ ФІКС
+    if (!refreshed) {
+      if (isPrivateRoute) {
+        return NextResponse.redirect(new URL('/sign-in', request.url));
+      }
+
+      return NextResponse.next();
+    }
+
+    // refresh успішний
+    if (isPublicRoute) {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+
+    return NextResponse.next({
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
+    });
   }
 
-  // Якщо accessToken існує
-  if (isPublicRoute) return NextResponse.redirect(new URL('/', request.url));
-  if (isPrivateRoute) return NextResponse.next();
+  // ===============================
+  // 2️⃣ accessToken ІСНУЄ
+  // ===============================
+  if (isPublicRoute) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
 
   return NextResponse.next();
 }
