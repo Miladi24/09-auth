@@ -1,7 +1,14 @@
 import { api } from '@/app/api/api';
 import type { Note, NewNote } from '@/types/note';
 import type { User } from '@/types/user';
+import type { AxiosResponse } from 'axios';
+import type { SessionResponse } from '@/types/session';
+import { redirect } from 'next/navigation';
+import axios from 'axios';
 import { cookies } from 'next/headers';
+
+
+/* ================= NOTES ================= */
 
 export interface NoteHttpResponse {
   notes: Note[];
@@ -19,11 +26,7 @@ export async function fetchNotes({
   page = 1,
   tag,
 }: FetchNotesProps): Promise<NoteHttpResponse> {
-  const cookieStore = cookies();
   const response = await api.get<NoteHttpResponse>('/notes', {
-    headers: { 
-      Cookie: cookieStore.toString(),
-    },
     params: {
       search: query,
       page,
@@ -36,37 +39,21 @@ export async function fetchNotes({
 }
 
 export async function fetchNoteById(id: string): Promise<Note> {
-  const cookieStore = cookies();
-  const response = await api.get<Note>(`/notes/${id}`, {
-    headers: {
-      Cookie: (await cookieStore).toString(),
-    },
-  });
-  
+  const response = await api.get<Note>(`/notes/${id}`);
   return response.data;
 }
 
 export async function createNote(newNote: NewNote): Promise<Note> {
-  const cookieStore = await cookies();
-  const response = await api.post<Note>('/notes', newNote, {
-    headers: {
-      Cookie: cookieStore.toString(),
-    },
-  });
-
+  const response = await api.post<Note>('/notes', newNote);
   return response.data;
 }
 
 export async function deleteNote(id: string): Promise<Note> {
-  const cookieStore = await cookies();
-  const response = await api.delete<Note>(`/notes/${id}`, {
-    headers: {
-      Cookie: cookieStore.toString(),
-    },
-  });
-
+  const response = await api.delete<Note>(`/notes/${id}`);
   return response.data;
 }
+
+/* ================= USER ================= */
 
 export async function getMe(): Promise<User> {
   const cookieStore = await cookies();
@@ -79,7 +66,16 @@ export async function getMe(): Promise<User> {
   return response.data;
 }
 
-export async function checkSession(): Promise<User> {
-  const response = await api.get<User>('/auth/session');
-  return response.data;
+
+export async function checkServerSession(): Promise<AxiosResponse<SessionResponse>> {
+  try {
+    return await api.get<SessionResponse>('/auth/session');
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      redirect('/sign-in');
+    }
+    throw error;
+  }
 }
+
+

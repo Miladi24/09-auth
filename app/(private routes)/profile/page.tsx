@@ -4,7 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Metadata } from 'next';
 
-import { getMe } from '@/lib/api/serverApi';
+import { getMe, checkServerSession } from '@/lib/api/serverApi';
+
 
 export const metadata: Metadata = {
   title: 'Profile page',

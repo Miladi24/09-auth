@@ -3,12 +3,14 @@ import nextServer from '@/lib/api/api';
 import { User } from '@/types/user';
 import { Note, NewNote } from '@/types/note';
 
+/* ================= AUTH ================= */
+
 export type RegisterRequest = {
   email: string;
   password: string;
 };
 
-export async function register(data: RegisterRequest) {
+export async function register(data: RegisterRequest): Promise<User> {
   const response = await nextServer.post<User>('/auth/register', data);
   return response.data;
 }
@@ -18,7 +20,7 @@ export type LoginRequest = {
   password: string;
 };
 
-export async function login(data: LoginRequest) {
+export async function login(data: LoginRequest): Promise<User> {
   const response = await nextServer.post<User>('/auth/login', data);
   return response.data;
 }
@@ -27,10 +29,17 @@ export async function logout(): Promise<void> {
   await nextServer.post('/auth/logout');
 }
 
+export async function checkSession(): Promise<User> {
+  const response = await nextServer.get<User>('/auth/session');
+  return response.data;
+}
+
+/* ================= USER ================= */
+
 export async function getMe(): Promise<User> {
   const response = await nextServer.get<User>('/users/me');
   return response.data;
-} 
+}
 
 type UpdateMeProps = {
   username: string;
@@ -40,6 +49,8 @@ export async function updateMe(data: UpdateMeProps): Promise<User> {
   const response = await nextServer.patch<User>('/users/me', data);
   return response.data;
 }
+
+/* ================= NOTES ================= */
 
 export interface NoteHttpResponse {
   notes: Note[];
@@ -81,10 +92,5 @@ export async function createNote(newNote: NewNote): Promise<Note> {
 
 export async function deleteNote(id: string): Promise<Note> {
   const response = await nextServer.delete<Note>(`/notes/${id}`);
-  return response.data;
-}
-
-export async function checkSession(): Promise<User> {
-  const response = await nextServer.get('/auth/session');
   return response.data;
 }
