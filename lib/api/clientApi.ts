@@ -32,7 +32,7 @@ export async function logout(): Promise<void> {
 
 
 export async function checkSessionClient(): Promise<User> {
-  const response = await nextServer.get<User>('/auth/session');
+  const response = await nextServer.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/session`);
   return response.data;
 }
 
