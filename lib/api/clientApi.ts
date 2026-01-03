@@ -1,7 +1,8 @@
 import nextServer from '@/lib/api/api';
-
+import axios from 'axios';
 import { User } from '@/types/user';
 import { Note, NewNote } from '@/types/note';
+import { redirect } from 'next/navigation';
 
 /* ================= AUTH ================= */
 
@@ -37,10 +38,16 @@ export async function checkSession(): Promise<User> {
 /* ================= USER ================= */
 
 export async function getMe(): Promise<User> {
-  const response = await nextServer.get<User>('/users/me');
-  return response.data;
+  try {
+    const response = await nextServer.get<User>('/users/me');
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      redirect('/sign-in'); // ⬅️ ПРАВИЛЬНО
+    }
+    throw error;
+  }
 }
-
 type UpdateMeProps = {
   username: string;
 };
@@ -49,6 +56,7 @@ export async function updateMe(data: UpdateMeProps): Promise<User> {
   const response = await nextServer.patch<User>('/users/me', data);
   return response.data;
 }
+
 
 /* ================= NOTES ================= */
 
