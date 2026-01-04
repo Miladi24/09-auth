@@ -31,10 +31,17 @@ export async function logout(): Promise<void> {
 }
 
 
-export async function checkSessionClient(): Promise<User> {
-  const response = await nextServer.get<User>('/auth/session');
-  return response.data;
+
+
+export async function checkSessionClient() {
+  try {
+    const { data } = await nextServer.get('/auth/session');
+    return data;
+  } catch (error) {
+    return null;
+  }
 }
+
 
 // clientApi.ts
 export { checkSessionClient as checkSession };
